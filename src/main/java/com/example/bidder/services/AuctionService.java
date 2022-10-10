@@ -14,4 +14,5 @@ public interface AuctionService {
     public Bid placeBid(Bid bid) throws Exception;
     public int maxBid(int auction_id) throws Exception;
     public User loginUser(User user);
+
 }

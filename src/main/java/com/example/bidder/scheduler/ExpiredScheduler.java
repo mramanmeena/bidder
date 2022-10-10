@@ -69,7 +69,9 @@ public class ExpiredScheduler {
         for (Auction auction : newAuctions) {
             long currentTime = Instant.now().toEpochMilli();
             long startTime = auction.getStartTime().toInstant().toEpochMilli();
-            if ((startTime >= currentTime)) {
+            long endTime = auction.getEndTime().toInstant().toEpochMilli();
+
+            if ((startTime <= currentTime) && (endTime >= currentTime)) {
                 log.info("Auction with auction_id {} is live", auction.getId());
                 auction.setStatus(LIVE);
                 auctionDao.save(auction);

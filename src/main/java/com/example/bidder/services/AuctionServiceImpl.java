@@ -41,11 +41,14 @@ public class AuctionServiceImpl implements AuctionService {
     @Transactional
     public Auction createAuction(Auction auction) throws Exception {
         Optional<Auction> pr = auctionDao.findByItemNameAndStatus(auction.getItemName(), "Live");
-        long prEndTime = pr.get().getEndTime().toInstant().toEpochMilli();
+
         long auctionStartTime = auction.getStartTime().toInstant().toEpochMilli();
         long auctionEndTime = auction.getEndTime().toInstant().toEpochMilli();
-        if (pr.isPresent() && prEndTime > auctionStartTime)
-            throw new RuntimeException(AUCTION_ALREADY_PRESENT);
+        if (pr.isPresent()) {
+            long prEndTime = pr.get().getEndTime().toInstant().toEpochMilli();
+            if (prEndTime > auctionStartTime)
+                throw new RuntimeException(AUCTION_ALREADY_PRESENT);
+        }
 
         if (auctionStartTime >= auctionEndTime)
             throw new RuntimeException(START_TIME_ERROR);
@@ -69,35 +72,30 @@ public class AuctionServiceImpl implements AuctionService {
         String itemName = bid.getItemName();
         int userId = bid.getUserId();
         Integer bidAmount = bid.getBidAmount();
-        Auction auction = auctionDao.findByItemName(itemName).orElseThrow(() -> new RuntimeException("Unavailable"));
+        Auction auction = auctionDao.findByItemNameAndStatus(itemName, "Live").orElseThrow(() -> new RuntimeException("Unavailable"));
+        Optional<User> user = userDao.findById(userId);
 
-        if (auction.getStatus().equals("Live")) {
-
-            Optional<User> user = userDao.findById(userId);
-
-            if (user.isPresent()) {
-                if (auction.getWinnerId() == 0) {
+        if (user.isPresent()) {
+            if (auction.getWinnerId() == 0) {
+                auction.setHighestBid(bidAmount);
+                auction.setWinnerId(userId);
+                bid.setStatus("Accepted");
+            } else {
+                int max = maxBid(auction.getId());
+                if (bidAmount >= max + auction.getStepRate()) {
                     auction.setHighestBid(bidAmount);
                     auction.setWinnerId(userId);
                     bid.setStatus("Accepted");
                 } else {
-                    int max = maxBid(auction.getId());
-                    if (bidAmount >= max + auction.getStepRate()) {
-                        auction.setHighestBid(bidAmount);
-                        auction.setWinnerId(userId);
-                        bid.setStatus("Accepted");
-                    } else {
-                        bid.setStatus("Not Accepted");
-                    }
-                    auctionDao.save(auction);
-                    bidDao.save(bid);
+                    bid.setStatus("Not Accepted");
                 }
-                return bid;
+                auctionDao.save(auction);
+                bidDao.save(bid);
             }
-            throw new RuntimeException(USER_NOT_FOUND);
+            return bid;
         }
-        throw new RuntimeException(NOT_LIVE_YET);
-    }
+        throw new RuntimeException(USER_NOT_FOUND);
+}
 
     public int maxBid(int auction_id) throws Exception {
         Auction auction = auctionDao.findById(auction_id).orElseThrow(() -> new RuntimeException("Unavailable"));
