@@ -33,11 +33,6 @@ public class AuctionController {
             return new ResponseEntity<Auction>(HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/getAuctions")
-    public List<Auction> getAuctions() throws Exception {
-        return  auctionService.AllAuctions();
-    }
-
 
     @PostMapping("/place")
     public ResponseEntity<Bid> placeBid(@RequestBody Bid bid){

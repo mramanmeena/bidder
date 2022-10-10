@@ -1,4 +1,5 @@
 package com.example.bidder.scheduler;
+
 import com.example.bidder.model.Auction;
 import com.example.bidder.model.EmailDetails;
 import com.example.bidder.model.User;
@@ -14,6 +15,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.bidder.constants.Constants.MESSAGE_BODY;
+import static com.example.bidder.constants.Constants.WINNING_MESSAGE;
+
 @Slf4j
 @Component
 public class ExpiredScheduler {
@@ -25,44 +29,53 @@ public class ExpiredScheduler {
     @Autowired
     AuctionDao auctionDao;
 
+    private final String EXPIRED = "Expired";
+    private final String LIVE = "Live";
+    private final String NOT_SET = "Not Set";
 
-    @Scheduled( cron = "${cron}" )
+    @Scheduled(cron = "${cron}")
     public void markExpired() throws Exception {
 
-        List<Auction> auctions = (List<Auction>) auctionService.AllAuctions();
-        for (Auction auction: auctions) {
-            log.info("auctions list {}  {}",auction.getId(),auction.getStatus());
+        List<Auction> liveAuctions = auctionDao.findAllByStatus(LIVE).orElseThrow();
+        List<Auction> newAuctions = auctionDao.findAllByStatus(NOT_SET).orElseThrow();
 
-            if ((auction.getStatus().equals("Not Set")  || auction.getStatus().isEmpty()) && (auction.getStartTime().toInstant().toEpochMilli() <= Instant.now().toEpochMilli())) {
-                    log.info("Auction with auction_id {} is live", auction.getId());
-                    auction.setStatus("Live");
-                    auctionDao.save(auction);
-            }
-            else if (auction.getStatus().equals("Live") && auction.getWinnerId() == 0 &&(auction.getEndTime().toInstant().toEpochMilli() < Instant.now().toEpochMilli() )){
-                auction.setStatus("Expired");
-                auctionDao.save(auction);
-            }
-            else if ((auction.getStatus().equals("Live")) && (auction.getWinnerId() != 0 )&& (auction.getEndTime().toInstant().toEpochMilli() < Instant.now().toEpochMilli()) ){
-                log.info("Sending Mail to the Winner of the auction with auction_id {} {}",auction.getId(),auction.getStatus());
-                Optional<User> winner  = auctionService.getWinner(auction.getItemName());
-                EmailDetails details = new EmailDetails();
+        for (Auction auction : liveAuctions) {
+            log.info("auctions list {}  {}", auction.getId(), auction.getStatus());
+            long currentTime = Instant.now().toEpochMilli();
+            long startTime = auction.getStartTime().toInstant().toEpochMilli();
+            long endTime = auction.getEndTime().toInstant().toEpochMilli();
+            if (endTime < currentTime) {
+                switch (auction.getWinnerId()) {
+                    case 0:
+                        auction.setStatus(EXPIRED);
+                        auctionDao.save(auction);
+                        break;
+                    default:
+                        log.info("Sending Mail to the Winner of the auction with auction_id {} {}", auction.getId(), auction.getStatus());
+                        Optional<User> winner = auctionService.getWinner(auction.getItemName());
+                        EmailDetails details = new EmailDetails();
 
-                 if (winner.isPresent()){
-                    details.setRecipient(winner.get().getEmail());
-                    details.setMsgBody("You Won");
-                    details.setSubject("Congratulations");
-                    emailService.winningMail(details);
-                    }
-                auction.setStatus("Expired");
-                auctionDao.save(auction);
+                        if (winner.isPresent()) {
+                            details.setRecipient(winner.get().getEmail());
+                            details.setMsgBody(MESSAGE_BODY);
+                            details.setSubject(WINNING_MESSAGE);
+                            emailService.winningMail(details);
+                        }
+                        auction.setStatus(EXPIRED);
+                        auctionDao.save(auction);
+                }
             }
-
-            else if (auction.getEndTime().toInstant().toEpochMilli() < Instant.now().toEpochMilli() && !(auction.getStatus().equals("Expired"))) {
-//                log.info("Auction with auction_id {} Expired",auction.getAuctionId());
-                auction.setStatus("Expired");
-                auctionDao.save(auction);
-            }
-
         }
+        for (Auction auction : newAuctions) {
+            long currentTime = Instant.now().toEpochMilli();
+            long startTime = auction.getStartTime().toInstant().toEpochMilli();
+            if ((startTime >= currentTime)) {
+                log.info("Auction with auction_id {} is live", auction.getId());
+                auction.setStatus(LIVE);
+                auctionDao.save(auction);
+            }
+        }
+
     }
 }
+

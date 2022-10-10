@@ -15,8 +15,6 @@ public class Bid {
     @Id
     @GeneratedValue
     private int id;
-    @Version
-    private Long version;
     private int userId;
     private int bidAmount;
     private String status;

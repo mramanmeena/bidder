@@ -11,8 +11,6 @@ public interface AuctionService {
     public Optional<User> getWinner(String itemName) throws Exception;
     public Auction createAuction(Auction auction) throws Exception;
     public Auction  getAuction(String id) throws Exception;
-    public List< Auction > AllAuctions() throws Exception;
-
     public Bid placeBid(Bid bid) throws Exception;
     public int maxBid(int auction_id) throws Exception;
     public User loginUser(User user);

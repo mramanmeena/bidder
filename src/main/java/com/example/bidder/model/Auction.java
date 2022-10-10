@@ -1,10 +1,8 @@
 package com.example.bidder.model;
 
 import lombok.*;
-import  javax.persistence.Id;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Table;
+
+import javax.persistence.*;
 import java.util.Date;
 
 
@@ -21,6 +19,8 @@ public class Auction {
     private int id;
     private String basePrice;
     private Date startTime;
+    @Version
+    private long version;
     private Date endTime;
     private Integer stepRate;
     private String itemName;
