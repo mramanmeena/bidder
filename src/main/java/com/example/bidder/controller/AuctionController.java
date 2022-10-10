@@ -62,7 +62,7 @@ public class AuctionController {
         }
 
     }
-    @PostMapping("/Login")
+    @PostMapping("/login")
     public ResponseEntity<User> login(@RequestBody User user) throws Exception {
         try {
             return new ResponseEntity<User>(auctionService.loginUser(user), HttpStatus.ACCEPTED);

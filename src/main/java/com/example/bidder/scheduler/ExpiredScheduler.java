@@ -31,9 +31,9 @@ public class ExpiredScheduler {
 
         List<Auction> auctions = (List<Auction>) auctionService.AllAuctions();
         for (Auction auction: auctions) {
-            log.info("auctions list {}{}",auction.getId(),auction.getStatus());
+            log.info("auctions list {}  {}",auction.getId(),auction.getStatus());
 
-            if ((auction.getStatus()==null  || auction.getStatus().isEmpty()) && (auction.getStartTime().toInstant().toEpochMilli() <= Instant.now().toEpochMilli())) {
+            if ((auction.getStatus().equals("Not Set")  || auction.getStatus().isEmpty()) && (auction.getStartTime().toInstant().toEpochMilli() <= Instant.now().toEpochMilli())) {
                     log.info("Auction with auction_id {} is live", auction.getId());
                     auction.setStatus("Live");
                     auctionDao.save(auction);

@@ -12,4 +12,6 @@ public interface AuctionDao extends JpaRepository<Auction,String> {
     Optional<Auction> findByItemNameAndStatus(String itemName, String status);
 
     Optional<Auction> findByItemName(String itemName);
+
+    Optional<Auction> findById(int auction_id);
 }

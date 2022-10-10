@@ -1,5 +1,4 @@
 package com.example.bidder.services;
-
 import com.example.bidder.model.Auction;
 import com.example.bidder.model.Bid;
 import com.example.bidder.model.User;
@@ -83,19 +82,24 @@ public class AuctionServiceImpl implements AuctionService {
                     } else {
                         bid.setStatus("Not Accepted");
                     }
+                    try{
                     auctionDao.save(auction);
-                    bidDao.save(bid);
+                    bidDao.save(bid);}
+                    catch (Exception e){
+                        throw new RuntimeException(e);
+                    }
                 }
+                return bid;
             }
-            return bid;
+            throw new RuntimeException("User not found");
         }
         throw new RuntimeException("Auction is not live yet");
     }
 
     public int maxBid(int auction_id) throws Exception {
-        Optional < Auction > auction = auctionDao.findById(String.valueOf(auction_id));
-        if (auction.get().getHighestBid()!=null) {
-            return auction.get().getHighestBid();
+         Auction auction = auctionDao.findById(auction_id).orElseThrow(() -> new RuntimeException("Unavailable"));
+        if (auction.getHighestBid()!=null) {
+            return auction.getHighestBid();
         }
         return 0;
     }
