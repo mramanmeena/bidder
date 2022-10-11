@@ -31,7 +31,7 @@ public class AuctionServiceImpl implements AuctionService {
 
     public Optional<User> getWinner(String itemName) throws Exception {
         log.info("c1 : {}", itemName);
-        Auction auction = auctionDao.findByItemNameAndStatus(itemName, "Live").orElseThrow(() -> new RuntimeException("Unavailable"));
+        Auction auction = auctionDao.findByItemNameAndStatus(itemName, "Live").orElseThrow(() -> new RuntimeException(AUCTION_NOT_FOUND));
         if (auction.getWinnerId() != 0)
             return userDao.findById(auction.getWinnerId());
         throw new RuntimeException(WINNER_NOT_FOUND);
@@ -95,7 +95,7 @@ public class AuctionServiceImpl implements AuctionService {
             return bid;
         }
         throw new RuntimeException(USER_NOT_FOUND);
-}
+    }
 
     public int maxBid(int auction_id) throws Exception {
         Auction auction = auctionDao.findById(auction_id).orElseThrow(() -> new RuntimeException("Unavailable"));

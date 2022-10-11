@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,53 +33,36 @@ public class ExpiredScheduler {
 
     private final String EXPIRED = "Expired";
     private final String LIVE = "Live";
-    private final String NOT_SET = "Not Set";
+
 
     @Scheduled(cron = "${cron}")
     public void markExpired() throws Exception {
+        Date cT = Date.from(java.time.Clock.systemUTC().instant());
+        List<Auction> ExpiringAuctions = auctionDao.findEndedWithStatus(cT, "Live").orElseThrow();
+        log.info("ExpiringAuctions {}", ExpiringAuctions);
+        for (Auction auction : ExpiringAuctions) {
+            switch (auction.getWinnerId()) {
+                case 0:
+                    auction.setStatus(EXPIRED);
+                    auctionDao.save(auction);
+                    break;
+                default:
+                    log.info("Sending Mail to the Winner of the auction with auction_id {} {}", auction.getId(), auction.getStatus());
+                    Optional<User> winner = auctionService.getWinner(auction.getItemName());
+                    EmailDetails details = new EmailDetails();
 
-        List<Auction> liveAuctions = auctionDao.findAllByStatus(LIVE).orElseThrow();
-        List<Auction> newAuctions = auctionDao.findAllByStatus(NOT_SET).orElseThrow();
-
-        for (Auction auction : liveAuctions) {
-            log.info("auctions list {}  {}", auction.getId(), auction.getStatus());
-            long currentTime = Instant.now().toEpochMilli();
-            long startTime = auction.getStartTime().toInstant().toEpochMilli();
-            long endTime = auction.getEndTime().toInstant().toEpochMilli();
-            if (endTime < currentTime) {
-                switch (auction.getWinnerId()) {
-                    case 0:
-                        auction.setStatus(EXPIRED);
-                        auctionDao.save(auction);
-                        break;
-                    default:
-                        log.info("Sending Mail to the Winner of the auction with auction_id {} {}", auction.getId(), auction.getStatus());
-                        Optional<User> winner = auctionService.getWinner(auction.getItemName());
-                        EmailDetails details = new EmailDetails();
-
-                        if (winner.isPresent()) {
-                            details.setRecipient(winner.get().getEmail());
-                            details.setMsgBody(MESSAGE_BODY);
-                            details.setSubject(WINNING_MESSAGE);
-                            emailService.winningMail(details);
-                        }
-                        auction.setStatus(EXPIRED);
-                        auctionDao.save(auction);
-                }
+                    if (winner.isPresent()) {
+                        details.setRecipient(winner.get().getEmail());
+                        details.setMsgBody(MESSAGE_BODY);
+                        details.setSubject(WINNING_MESSAGE);
+                        emailService.winningMail(details);
+                    }
+                    auction.setStatus(EXPIRED);
+                    auctionDao.save(auction);
             }
         }
-        for (Auction auction : newAuctions) {
-            long currentTime = Instant.now().toEpochMilli();
-            long startTime = auction.getStartTime().toInstant().toEpochMilli();
-            long endTime = auction.getEndTime().toInstant().toEpochMilli();
-
-            if ((startTime <= currentTime) && (endTime >= currentTime)) {
-                log.info("Auction with auction_id {} is live", auction.getId());
-                auction.setStatus(LIVE);
-                auctionDao.save(auction);
-            }
-        }
-
     }
+
+
 }
 

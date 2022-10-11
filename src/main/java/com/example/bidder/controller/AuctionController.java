@@ -1,5 +1,6 @@
 package com.example.bidder.controller;
 
+import com.example.bidder.OptimisticLocking.SimulateOptimisticLockingTest;
 import com.example.bidder.model.Auction;
 import com.example.bidder.model.Bid;
 import com.example.bidder.model.User;
@@ -23,6 +24,8 @@ public class AuctionController {
     @Autowired
     private AuctionServiceImpl auctionService;
 
+    @Autowired
+    private SimulateOptimisticLockingTest lockTest;
     @PostMapping("/create")
     public ResponseEntity<Auction> createAuction(@RequestBody  Auction auction) {
         if (!(auction == null || auction.getItemName() == null || auction.getEndTime() == null || auction.getStepRate() == null )) {
@@ -65,6 +68,11 @@ public class AuctionController {
         catch (Exception e) {
             return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @PutMapping("/lockCheck")
+    public void lockCheck(@RequestBody String auctionId)throws Exception  {
+        lockTest.Simulator(auctionId);
     }
 
 }

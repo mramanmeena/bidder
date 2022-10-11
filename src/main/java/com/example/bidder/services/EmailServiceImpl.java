@@ -13,20 +13,14 @@ public class EmailServiceImpl implements EmailService {
     @Autowired  private JavaMailSender javaMailSender;
 
     @Value("${spring.mail.username}")  private String sender;
-
-    // Method 1
-    // To send a simple email
     public String winningMail(EmailDetails details)
     {
 
-        // Try block to check for exceptions
         try {
 
-            // Creating a simple mail message
             SimpleMailMessage mailMessage
                     = new SimpleMailMessage();
 
-            // Setting up necessary details
             mailMessage.setFrom(sender);
             mailMessage.setTo(details.getRecipient());
             mailMessage.setText(details.getMsgBody());
@@ -37,7 +31,6 @@ public class EmailServiceImpl implements EmailService {
             return "Mail Sent Successfully...";
         }
 
-        // Catch block to handle the exceptions
             catch (Exception e) {
             log.info("Exception" , e.getMessage());
             return "Error while Sending Mail";
