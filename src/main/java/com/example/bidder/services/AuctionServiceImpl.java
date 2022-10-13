@@ -58,7 +58,7 @@ public class AuctionServiceImpl implements AuctionService {
 
     public Auction getAuction(String id) throws Exception {
         log.info("Auction {} is available ", getAuction(id));
-        Auction auction = auctionDao.findById(id).orElseThrow(() -> new RuntimeException("Unavailable")); //
+        Auction auction = auctionDao.findById(id).orElseThrow(() -> new RuntimeException("Unavailable"));
         return auction;
     }
 

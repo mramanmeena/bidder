@@ -30,5 +30,3 @@ public class Auction {
 
 }
 
-
-//UPDATE auction set winner = 1 , version = version +1 where id = {} version =0 ;
