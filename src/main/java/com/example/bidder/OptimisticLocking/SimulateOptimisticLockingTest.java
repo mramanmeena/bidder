@@ -16,7 +16,6 @@ public class SimulateOptimisticLockingTest {
 
     public void Simulator(String auctionId) throws InterruptedException {
         Thread t1 = new Thread(new Runnable() {
-            Transaction tx = null;
             @Override
             public void run() {
                 Auction auction = auctionDao.findById(Integer.parseInt(auctionId)).orElseThrow();

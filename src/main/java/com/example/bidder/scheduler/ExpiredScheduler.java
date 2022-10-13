@@ -38,7 +38,7 @@ public class ExpiredScheduler {
     @Scheduled(cron = "${cron}")
     public void markExpired() throws Exception {
         Date cT = Date.from(java.time.Clock.systemUTC().instant());
-        List<Auction> ExpiringAuctions = auctionDao.findEndedWithStatus(cT, "Live").orElseThrow();
+        List<Auction> ExpiringAuctions = auctionDao.findEndedWithStatus(cT, "Live").orElseThrow(() -> new RuntimeException("No recently completed auction found"));
         log.info("ExpiringAuctions {}", ExpiringAuctions);
         for (Auction auction : ExpiringAuctions) {
             switch (auction.getWinnerId()) {

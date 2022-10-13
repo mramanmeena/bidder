@@ -25,8 +25,7 @@ public class SetLiveScheduler {
 
     public void markLive() throws Exception {
         Date cT = Date.from(java.time.Clock.systemUTC().instant());
-        List<Auction> newAuctions = auctionDao.toBeSet(cT, NOT_SET).orElseThrow();
-        List<Auction> NotSet = auctionDao.toBeSet(cT, "Live").orElseThrow();
+        List<Auction> NotSet = auctionDao.toBeSet(cT, NOT_SET).orElseThrow(() -> new RuntimeException("All auction status are set"));
         for (Auction auction : NotSet) {
                 log.info("Auction with auction_id {} is live", auction.getId());
                 auction.setStatus(LIVE);

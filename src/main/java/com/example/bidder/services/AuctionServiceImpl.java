@@ -73,32 +73,28 @@ public class AuctionServiceImpl implements AuctionService {
         int userId = bid.getUserId();
         Integer bidAmount = bid.getBidAmount();
         Auction auction = auctionDao.findByItemNameAndStatus(itemName, "Live").orElseThrow(() -> new RuntimeException("Unavailable"));
-        Optional<User> user = userDao.findById(userId);
-
-        if (user.isPresent()) {
-            if (auction.getWinnerId() == 0) {
+        User user = userDao.findById(userId).orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
+        if (auction.getWinnerId() == 0) {
+            auction.setHighestBid(bidAmount);
+            auction.setWinnerId(userId);
+            bid.setStatus("Accepted");
+        } else {
+            int max = maxBid(auction);
+            if (bidAmount >= max + auction.getStepRate()) {
                 auction.setHighestBid(bidAmount);
                 auction.setWinnerId(userId);
                 bid.setStatus("Accepted");
             } else {
-                int max = maxBid(auction.getId());
-                if (bidAmount >= max + auction.getStepRate()) {
-                    auction.setHighestBid(bidAmount);
-                    auction.setWinnerId(userId);
-                    bid.setStatus("Accepted");
-                } else {
-                    bid.setStatus("Not Accepted");
-                }
-                auctionDao.save(auction);
-                bidDao.save(bid);
+                bid.setStatus("Not Accepted");
             }
-            return bid;
+            auctionDao.save(auction);
+            bidDao.save(bid);
         }
-        throw new RuntimeException(USER_NOT_FOUND);
+        return bid;
+
     }
 
-    public int maxBid(int auction_id) throws Exception {
-        Auction auction = auctionDao.findById(auction_id).orElseThrow(() -> new RuntimeException("Unavailable"));
+    public int maxBid(Auction auction) throws Exception {
         if (auction.getHighestBid() != null) {
             return auction.getHighestBid();
         }
