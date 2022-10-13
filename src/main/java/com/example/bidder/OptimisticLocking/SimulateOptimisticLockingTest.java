@@ -32,7 +32,7 @@ public class SimulateOptimisticLockingTest {
             }
         });
 
-        Thread t2 = new Thread(new Runnable() /{
+        Thread t2 = new Thread(new Runnable() {
             @Override
             public void run() {
                 Auction auction = auctionDao.findById(Integer.parseInt(auctionId)).orElseThrow();
